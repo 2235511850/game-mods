@@ -7,6 +7,7 @@
 | 游戏 | Mod | 版本 | 状态 |
 |---|---|---|---|
 | 影之刃零（Phantom Blade Zero） | [伤害飘字自定义](PBZ_DamageNumbers_Custom/) | v0.7.2 | 可用，实机验证通过 |
+| 赛博朋克 2077（Cyberpunk 2077） | [游戏变速](CP77_GameSpeedControl/) | v1.1.0 | 可用，实机验证通过 |
 
 ## 结构约定
 
@@ -25,7 +26,21 @@ dist/release/_build/   ← 安装/卸载脚本 + 打包脚本 + UE4SS 素材
 
 发布包的内容由 `make_release.py` 里的 `PAYLOAD` 白名单决定，**只打 `Scripts/` 和三个元数据文件**，测试/备份/参考目录不会被误打进去。
 
+上面的骨架以 UE4SS 类 mod 为模板。**`manifest.json` 的字段跟着 mod 框架走**：
+
+| | UE4SS（影之刃零） | CET（赛博朋克 2077） |
+| --- | --- | --- |
+| 启用方式 | `enabled.txt` + `mods.txt` | 目录名自动加载，无启用标记 |
+| 安装位置 | `platform/steam/ue4ss/Mods/<名字>/` | `bin/x64/plugins/cyber_engine_tweaks/mods/<名字>/` |
+| 路径映射 | 无需，`Scripts/` 即目录结构 | 写进 `install.map`，因为路径太深 |
+| 配置/日志 | 走 `UE4SS.log` | 各自 mod 目录下的 `config.json` / `debug.log` |
+
+共同点是 **源码只有一份，不设 payload 副本** —— 一旦有两份，就会出现"打包源和工程源不同步"（这个坑 PBZ 那个 mod 已经踩过）。
+
 ## 当前项目常用操作
+
+下面以 PBZ 为例。赛博朋克那个 mod 的部署与测试命令写在
+[它自己的 README](CP77_GameSpeedControl/README.md) 里（CET 的安装路径和启用方式都不同，不混在一起写）。
 
 ### 部署到游戏
 

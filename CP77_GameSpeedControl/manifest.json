@@ -1,0 +1,49 @@
+{
+  "name": "游戏变速 / Game Speed Control",
+  "mod_folder": "GameSpeedControl",
+  "version": "1.1.0",
+  "type": "cet-lua",
+  "requires": ["Cyber Engine Tweaks (CET) 1.38.x"],
+  "activation": "CET 自动加载 mods/ 下任意文件夹，无需启用标记",
+  "entry": "Scripts/init.lua",
+  "install": {
+    "target_root": "Cyberpunk 2077",
+    "map": {
+      "Scripts/init.lua": "bin/x64/plugins/cyber_engine_tweaks/mods/GameSpeedControl/init.lua"
+    }
+  },
+  "hotkeys": {
+    "gspeed_cycle": "按循环档位切换（默认 F6）",
+    "gspeed_reset": "回到 1.0 原速（默认 F7）",
+    "gspeed_player": "切换玩家是否同步加速（默认 F8）"
+  },
+  "settings_page": "设置 → Mods → 游戏变速",
+  "console_api": "GetMod(\"GameSpeedControl\").SetScale(2.0)",
+  "runtime_files": {
+    "config.json": "档位配置，首次修改档位时生成，重启保留",
+    "debug.log": "插件自己的诊断日志，与 CET 的 GameSpeedControl.log 不同"
+  },
+  "tested_target": {
+    "store": "Steam",
+    "game_version": "2.5",
+    "cet_version": "1.38.1",
+    "os": "Windows",
+    "gpu": "AMD RX 9070 (FSR4, Ray Tracing on, Path Tracing off)"
+  },
+  "features": [
+    "引擎时间膨胀变速，1.0-10.0 可调，含慢放",
+    "F6 循环档位可在设置页配置（1-5 档，每档 0.1-10.0）",
+    "玩家同步加速开关：开 = V 也一起变快（跑图），关 = 只有世界变（拍照）",
+    "屏幕角标显示当前倍率与档位序位，走引擎原生通知通道",
+    "档位配置写入 config.json，重启保留",
+    "过场/读档/快速移动后自动补挂倍率，每秒一次",
+    "不依赖热键的两个按钮：切到下一档 / 回到原速"
+  ],
+  "known_limits": [
+    "载具物理被引擎硬编码忽略 dilation，开车不会变快",
+    "语音是实时音频流，不随膨胀变速；倍率超过 2.0 台词开始截断、口型对不上",
+    "与斯安威斯坦/克伦齐科夫共用 dilation 栈，但使用独立 reason 名，互不覆盖",
+    "只改引擎时间流速，不修改任何游戏文件；本插件无 archive、无 redscript"
+  ],
+  "version_note": "1.0.0 是 N 网首发的两个 zip（配置写入有 bug、滑条提示会刷屏）；本仓库的 1.1.0 是修复后的源码，两者逻辑不同，不要混用。"
+}

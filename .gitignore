@@ -13,6 +13,13 @@ dist/release/_build/doc_mod.txt
 # 从别人 pak 里提取的明文 JS，仅作研究参考，不随仓库分发
 PBZ_DamageNumbers_Custom/reference/SLEEP_PBZDamageNumbers.js.txt
 
+# ============ mod 运行时产物 ============
+# CET 会在 mod 目录里生成 config.json / debug.log / db.sqlite3
+# 测试脚本用临时目录，但手跑（cwd 停在 _test）时可能落在这里
+CP77_GameSpeedControl/**/config.json
+CP77_GameSpeedControl/**/debug.log
+*.sqlite3
+
 # ============ 工具目录 ============
 .workbuddy/
 
