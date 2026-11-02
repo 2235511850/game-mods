@@ -1,0 +1,27 @@
+{
+  "name": "PBZ 自定义伤害飘字",
+  "mod_folder": "PBZ_DamageNumbers_Custom",
+  "version": "0.7.2",
+  "type": "ue4ss-lua",
+  "requires": ["UE4SS for Phantom Blade Zero"],
+  "activation": "enabled.txt (no mods.txt edit needed)",
+  "entry": "Scripts/main.lua",
+  "tested_target": {
+    "store": "Steam",
+    "game_build": "26266538",
+    "engine_version": "5.7.4",
+    "ue4ss_version": "3.0.1 Beta",
+    "platform": "Windows"
+  },
+  "features": [
+    "只保留 10 类掉血飘字，其余 24 类（韧/气/累积/回复）Alpha 归零隐藏",
+    "去掉 EmojiIcon 标签字，只显示纯数字",
+    "治疗数字纯白 -> 亮绿",
+    "飘字存活 1.0s -> 1.8s",
+    "行距 20 -> 34（解决数字重叠）",
+    "敌人飘字缩放 1.0 -> 0.9"
+  ],
+  "assets": {
+    "config": "/PBZCombatAsset/UI/DamageNumber/DA_DamageNumberConfig.DA_DamageNumberConfig"
+  }
+}

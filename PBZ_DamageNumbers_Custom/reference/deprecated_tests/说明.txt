@@ -1,0 +1,12 @@
+这些测试对应的探针代码已经从 main.lua 移除，跑它们会红，留着只为存档。
+
+- test_emoji_probe.py   ：第一代只读探针（探 EmojiIcon 类型 / KismetTextLibrary）
+- test_emoji_probe2.py  ：第二代写入探针（4A/4B/4C/4D，最终定位到「不能直接赋字符串」）
+- test_input_probe.py   ：io / 热键 / 控制台命令探针（用户决定不做可配置化，未实机运行）
+
+探针代码本体见 reference/probe_input_block.lua.txt。
+结论都已写进 README 与 memory 日志。
+
+仍然有效、可以随时跑的回归测试在 _test/：
+  test_rowhide.py     —— 逐行隐藏（24 行 Alpha 归零）
+  test_hidelabels.py  —— 去掉标签字（空 FText 构造 + 13 项断言）

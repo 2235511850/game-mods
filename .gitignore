@@ -1,0 +1,26 @@
+# ============ 发布产物 ============
+# 交付给别人的 zip 不进仓库，需要时跑 tools 里的脚本重新生成
+dist/release/*.zip
+
+# 打包工作目录（每次打包由脚本重建）
+dist/release/_build/pack_mod/
+dist/release/_build/pack_full/
+
+# 由 doc_mod.utf8.txt 转码生成的中间文件
+dist/release/_build/doc_mod.txt
+
+# ============ 第三方代码，不进仓库 ============
+# 从别人 pak 里提取的明文 JS，仅作研究参考，不随仓库分发
+PBZ_DamageNumbers_Custom/reference/SLEEP_PBZDamageNumbers.js.txt
+
+# ============ 工具目录 ============
+.workbuddy/
+
+# ============ Python ============
+__pycache__/
+*.pyc
+
+# ============ 系统 ============
+Thumbs.db
+desktop.ini
+.DS_Store

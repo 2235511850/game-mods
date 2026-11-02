@@ -1,0 +1,155 @@
+-- ---------- 临时诊断：io / 热键 / 控制台命令 ----------
+-- 【只读，不写游戏资产】
+-- 目的：判断「外部 settings 文件 + 按热键切档」这条路走不做得成。
+--
+-- 探三件事：
+--   1. io 库能不能用 —— 读写外部文件是 settings.txt 方案的地基。若被禁，只剩热键预设
+--   2. RegisterKeyBind 能否注册成功，回调是否真的会被触发（注册成功 != 按了有反应）
+--   3. RegisterConsoleCommandHandler 有没有（进阶入口，小白用不上）
+--
+-- 唯一落盘的动作为一次自测：在 mod 目录写 _probe_io.txt -> 读回校验 -> 删掉。
+-- 结论拿到后把 Config.probeInput 改 false 即可，热键也随之不再注册。
+local function probeInput()
+    if not Config.probeInput then return end
+    log("===== input/io probe v1 =====")
+
+    log(string.format("api | RegisterKeyBind=%s RegisterConsoleCommandHandler=%s LoopAsync=%s RegisterHook=%s",
+        type(RegisterKeyBind), type(RegisterConsoleCommandHandler),
+        type(LoopAsync), type(RegisterHook)))
+
+    log(string.format("io  | io=%s io.open=%s io.lines=%s io.popen=%s",
+        type(io), type(io and io.open), type(io and io.lines), type(io and io.popen)))
+    log(string.format("io  | os.time=%s os.remove=%s os.rename=%s",
+        type(os and os.time), type(os and os.remove), type(os and os.rename)))
+
+    -- 定位自己所在目录：debug.getinfo 最准，拿不到就用相对路径兜底逐个试
+    local dir = nil
+    pcall(function()
+        local info = debug.getinfo(1, "S")
+        local src = info and info.source or ""
+        src = tostring(src):gsub("^@", "")
+        dir = src:match("^(.*)[/\\][^/\\]*$")
+    end)
+    log("io  | script dir = " .. tostring(dir))
+
+    local cands = {}
+    if dir ~= nil then cands[#cands + 1] = dir .. "/config.lua" end
+    cands[#cands + 1] = "ue4ss/Mods/PBZ_DamageNumbers_Custom/Scripts/config.lua"
+    cands[#cands + 1] = "platform/steam/ue4ss/Mods/PBZ_DamageNumbers_Custom/Scripts/config.lua"
+    cands[#cands + 1] = "config.lua"
+
+    local baseDir = nil
+    if type(io) == "table" and type(io.open) == "function" then
+        for i = 1, #cands do
+            local okO, f = pcall(io.open, cands[i], "r")
+            if okO and f ~= nil then
+                local first = nil
+                pcall(function() first = f:read("*l") end)
+                pcall(function() f:close() end)
+                log(string.format("io  | read #%d OK   %s", i, cands[i]))
+                log("io  | first line = " .. tostring(first))
+                baseDir = cands[i]:match("^(.*)[/\\][^/\\]*$")
+                break
+            else
+                log(string.format("io  | read #%d miss %s", i, cands[i]))
+            end
+        end
+    else
+        log("io  | skipped: 没有 io.open")
+    end
+
+    -- 写自测：只在 mod 目录落一个临时文件，读回校验后立刻删除
+    if baseDir ~= nil then
+        local wp = baseDir .. "/_probe_io.txt"
+        local t = 0
+        pcall(function() t = os.time() or 0 end)
+        local marker = "pbzdn-" .. tostring(t)
+        local okW, wf = pcall(io.open, wp, "w")
+        local wrote = false
+        if okW and wf ~= nil then
+            wrote = pcall(function() wf:write(marker .. "\n") end)
+            pcall(function() wf:close() end)
+            log(string.format("io  | write ok=%s %s", tostring(wrote), wp))
+        else
+            log("io  | write FAILED " .. wp)
+        end
+        if wrote then
+            local okR, f2 = pcall(io.open, wp, "r")
+            local back = nil
+            if okR and f2 ~= nil then
+                pcall(function() back = f2:read("*a") end)
+                pcall(function() f2:close() end)
+            end
+            local matched = back ~= nil and string.find(back, marker, 1, true) ~= nil
+            log(string.format("io  | readback=%s match=%s",
+                tostring(back ~= nil), tostring(matched)))
+            local okD = pcall(os.remove, wp)
+            log("io  | cleanup=" .. tostring(okD))
+        end
+    end
+
+    -- 热键枚举
+    local kf7, modCtrl = nil, nil
+    pcall(function() kf7 = Key.F7 end)
+    pcall(function() modCtrl = ModifierKey.MODCONTROL end)
+    log(string.format("key | Key=%s ModifierKey=%s Key.F7=%s MODCONTROL=%s",
+        type(Key), type(ModifierKey), tostring(kf7), tostring(modCtrl)))
+
+    local probeKeys = { "F5", "F6", "F7", "F8", "F9", "F10" }
+    local seen = {}
+    for _, n in ipairs(probeKeys) do
+        local v = nil
+        pcall(function() v = Key[n] end)
+        seen[#seen + 1] = n .. "=" .. tostring(v)
+    end
+    log("key | 枚举 " .. table.concat(seen, " "))
+
+    -- 注册热键。回调里只打日志，不碰任何游戏数据。
+    local hits = 0
+    local function hit(name)
+        return function()
+            hits = hits + 1
+            log(string.format("key | >>> %s 按下（第 %d 次）<<<", name, hits))
+        end
+    end
+
+    if kf7 ~= nil and type(RegisterKeyBind) == "function" then
+        local ok1, r1 = pcall(RegisterKeyBind, kf7, hit("F7"))
+        log(string.format("key | bind F7       ok=%s ret=%s", tostring(ok1), tostring(ok1 and r1 or nil)))
+        if not ok1 then log("key | bind F7 err= " .. tostring(r1)) end
+
+        local kf8 = nil
+        pcall(function() kf8 = Key.F8 end)
+        if kf8 ~= nil then
+            local ok2, r2 = pcall(RegisterKeyBind, kf8, hit("F8"))
+            log(string.format("key | bind F8       ok=%s ret=%s", tostring(ok2), tostring(ok2 and r2 or nil)))
+            if not ok2 then log("key | bind F8 err= " .. tostring(r2)) end
+        end
+
+        -- 带修饰键的签名（不同 UE4SS 版本参数个数不一样，两种都试）
+        local kf9 = nil
+        pcall(function() kf9 = Key.F9 end)
+        if modCtrl ~= nil and kf9 ~= nil then
+            local ok3, r3 = pcall(RegisterKeyBind, modCtrl, kf9, hit("Ctrl+F9"))
+            log(string.format("key | bind Ctrl+F9  ok=%s ret=%s", tostring(ok3), tostring(ok3 and r3 or nil)))
+            if not ok3 then log("key | bind Ctrl+F9 err= " .. tostring(r3)) end
+        end
+    else
+        log("key | 跳过：Key.F7 取不到 或 没有 RegisterKeyBind")
+    end
+
+    -- 控制台命令
+    if type(RegisterConsoleCommandHandler) == "function" then
+        local okC, rC = pcall(RegisterConsoleCommandHandler, "pbzdnprobe", function(full, parts)
+            log("cmd | pbzdnprobe 收到: " .. tostring(full))
+            return true
+        end)
+        log(string.format("cmd | register pbzdnprobe ok=%s ret=%s", tostring(okC), tostring(okC and rC or nil)))
+        if not okC then log("cmd | err= " .. tostring(rC)) end
+    else
+        log("cmd | 跳过：没有 RegisterConsoleCommandHandler")
+    end
+
+    log("===== input/io probe v1 done =====")
+end
+
